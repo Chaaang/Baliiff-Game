@@ -440,11 +440,11 @@ class GameData {
         return boutique2Chinese;
       } else if (scene == 'Boutique 3') {
         return boutique3Chinese;
-      } else if (scene == 'Domestic 1') {
+      } else if (scene == 'Home 1') {
         return domestic1Chinese;
-      } else if (scene == 'Domestic 2') {
+      } else if (scene == 'Home 2') {
         return domestic2Chinese;
-      } else if (scene == 'Domestic 3') {
+      } else if (scene == 'Home 3') {
         return domestic3Chinese;
       } else if (scene == 'Office 1') {
         return office1Chinese;
@@ -452,11 +452,11 @@ class GameData {
         return office2Chinese;
       } else if (scene == 'Office 3') {
         return office3Chinese;
-      } else if (scene == 'Kitchen 1') {
+      } else if (scene == 'Restaurant 1') {
         return kitchen1Chinese;
-      } else if (scene == 'Kitchen 2') {
+      } else if (scene == 'Restaurant 2') {
         return kitchen2Chinese;
-      } else if (scene == 'Kitchen 3') {
+      } else if (scene == 'Restaurant 3') {
         return kitchen3Chinese;
       }
       // Default to Boutique 1
@@ -468,11 +468,11 @@ class GameData {
         return boutique2;
       } else if (scene == 'Boutique 3') {
         return boutique3;
-      } else if (scene == 'Domestic 1') {
+      } else if (scene == 'Home 1') {
         return domestic1;
-      } else if (scene == 'Domestic 2') {
+      } else if (scene == 'Home 2') {
         return domestic2;
-      } else if (scene == 'Domestic 3') {
+      } else if (scene == 'Home 3') {
         return domestic3;
       } else if (scene == 'Office 1') {
         return office1;
@@ -480,11 +480,11 @@ class GameData {
         return office2;
       } else if (scene == 'Office 3') {
         return office3;
-      } else if (scene == 'Kitchen 1') {
+      } else if (scene == 'Restaurant 1') {
         return kitchen1;
-      } else if (scene == 'Kitchen 2') {
+      } else if (scene == 'Restaurant 2') {
         return kitchen2;
-      } else if (scene == 'Kitchen 3') {
+      } else if (scene == 'Restaurant 3') {
         return kitchen3;
       }
       // Default to Boutique 1
@@ -520,11 +520,11 @@ class GameData {
         distractors = itemsWithoutPricesBoutique2Chinese;
       } else if (scene == 'Boutique 3') {
         distractors = itemsWithoutPricesBoutique3Chinese;
-      } else if (scene == 'Domestic 1') {
+      } else if (scene == 'Home 1') {
         distractors = itemsWithoutPricesDomestic1Chinese;
-      } else if (scene == 'Domestic 2') {
+      } else if (scene == 'Home 2') {
         distractors = itemsWithoutPricesDomestic2Chinese;
-      } else if (scene == 'Domestic 3') {
+      } else if (scene == 'Home 3') {
         distractors = itemsWithoutPricesDomestic3Chinese;
       } else if (scene == 'Office 1') {
         distractors = itemsWithoutPricesOffice1Chinese;
@@ -532,11 +532,11 @@ class GameData {
         distractors = itemsWithoutPricesOffice2Chinese;
       } else if (scene == 'Office 3') {
         distractors = itemsWithoutPricesOffice3Chinese;
-      } else if (scene == 'Kitchen 1') {
+      } else if (scene == 'Restaurant 1') {
         distractors = itemsWithoutPricesKitchen1Chinese;
-      } else if (scene == 'Kitchen 2') {
+      } else if (scene == 'Restaurant 2') {
         distractors = itemsWithoutPricesKitchen2Chinese;
-      } else if (scene == 'Kitchen 3') {
+      } else if (scene == 'Restaurant 3') {
         distractors = itemsWithoutPricesKitchen3Chinese;
       } else {
         distractors = itemsWithoutPrices;
@@ -548,11 +548,11 @@ class GameData {
         distractors = itemsWithoutPricesBoutique2;
       } else if (scene == 'Boutique 3') {
         distractors = itemsWithoutPricesBoutique3;
-      } else if (scene == 'Domestic 1') {
+      } else if (scene == 'Home 1') {
         distractors = itemsWithoutPricesDomestic1;
-      } else if (scene == 'Domestic 2') {
+      } else if (scene == 'Home 2') {
         distractors = itemsWithoutPricesDomestic2;
-      } else if (scene == 'Domestic 3') {
+      } else if (scene == 'Home 3') {
         distractors = itemsWithoutPricesDomestic3;
       } else if (scene == 'Office 1') {
         distractors = itemsWithoutPricesOffice1;
@@ -560,11 +560,11 @@ class GameData {
         distractors = itemsWithoutPricesOffice2;
       } else if (scene == 'Office 3') {
         distractors = itemsWithoutPricesOffice3;
-      } else if (scene == 'Kitchen 1') {
+      } else if (scene == 'Restaurant 1') {
         distractors = itemsWithoutPricesKitchen1;
-      } else if (scene == 'Kitchen 2') {
+      } else if (scene == 'Restaurant 2') {
         distractors = itemsWithoutPricesKitchen2;
-      } else if (scene == 'Kitchen 3') {
+      } else if (scene == 'Restaurant 3') {
         distractors = itemsWithoutPricesKitchen3;
       } else {
         distractors = itemsWithoutPrices;

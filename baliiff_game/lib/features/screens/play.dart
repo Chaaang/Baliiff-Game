@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:baliiff_game/features/models/game_data.dart';
 import 'package:baliiff_game/features/utils/language.dart';
 import 'package:baliiff_game/features/screens/result.dart';
+import 'package:baliiff_game/features/screens/home.dart';
+import 'package:baliiff_game/features/components/background_wrapper.dart';
 
 class PlayScreen extends StatefulWidget {
   final String scene;
@@ -18,12 +21,14 @@ class _PlayScreenState extends State<PlayScreen> {
   late List<String?> _selectedPrices;
   late ScrollController _leftScrollController;
   late ScrollController _rightScrollController;
+  late List<String> _shuffledPrices;
+  late List<String> _shuffledItems;
   bool _isScrolling = false;
 
   // Timer state
   Timer? _timer;
-  int _timeRemaining = 90; // 10 seconds for testing
-  final int _totalTime = 90;
+  int _timeRemaining = 120; // 10 seconds for testing
+  final int _totalTime = 120;
 
   // Get scene key from display name for game data lookup
   String get _sceneKey {
@@ -39,6 +44,17 @@ class _PlayScreenState extends State<PlayScreen> {
     _selectedPrices = List.filled(numDropdowns, null);
     _leftScrollController = ScrollController();
     _rightScrollController = ScrollController();
+
+    // Shuffle items once when screen initializes
+    print('sceneKey: $_sceneKey');
+    final allItems = GameData.getItemNamesForScene(_sceneKey);
+    _shuffledItems = List<String>.from(allItems);
+    _shuffledItems.shuffle(Random());
+
+    // Keep prices in sorted order (lowest to highest: 1-50, 51-100, 101-200, 201-500, 501+)
+    final prices = GameData.getPricesForScene(_sceneKey);
+    _shuffledPrices = List<String>.from(prices);
+    // Don't shuffle prices - keep them in order from lowest to highest
 
     // Synchronize scrolling
     _leftScrollController.addListener(_syncRightScroll);
@@ -531,7 +547,6 @@ class _PlayScreenState extends State<PlayScreen> {
 
   // Get available items for a specific dropdown (excludes items selected in other dropdowns)
   List<String> _getAvailableItemsForDropdown(int dropdownIndex) {
-    final allItems = GameData.getItemNamesForScene(_sceneKey);
     // Get items selected in other dropdowns
     final selectedInOtherDropdowns = <String>{};
     for (int i = 0; i < _selectedItems.length; i++) {
@@ -541,20 +556,23 @@ class _PlayScreenState extends State<PlayScreen> {
     }
     // Filter out items that are selected in other dropdowns
     // But keep the currently selected item in this dropdown
-    return allItems.where((item) {
-      if (item == _selectedItems[dropdownIndex]) {
-        return true; // Keep the currently selected item
-      }
-      return !selectedInOtherDropdowns.contains(
-        item,
-      ); // Exclude items selected elsewhere
-    }).toList();
+    // Use the pre-shuffled items list to maintain consistent order
+    final availableItems =
+        _shuffledItems.where((item) {
+          if (item == _selectedItems[dropdownIndex]) {
+            return true; // Keep the currently selected item
+          }
+          return !selectedInOtherDropdowns.contains(
+            item,
+          ); // Exclude items selected elsewhere
+        }).toList();
+
+    return availableItems;
   }
 
   @override
   Widget build(BuildContext context) {
     final language = LanguageHelper.currentLanguage;
-    final prices = GameData.getPricesForScene(_sceneKey);
     final numDropdowns = GameData.getNumberOfDropdowns(_sceneKey);
 
     return PopScope(
@@ -568,363 +586,440 @@ class _PlayScreenState extends State<PlayScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          centerTitle: true,
-          elevation: 0,
+          backgroundColor: Colors.transparent,
+          automaticallyImplyLeading: false,
         ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                Text(
-                  LanguageHelper.getPlayMessage(language),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+        body: BackgroundWrapper(
+          child: Stack(
+            children: [
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: 50.0,
+                    right: 50.0,
+                    top: 150.0,
+                    bottom: 100.0,
                   ),
-                ),
-                const SizedBox(height: 20),
-                // Timer bar
-                Row(
-                  children: [
-                    // Stopwatch icon
-                    Icon(
-                      Icons.timer,
-                      color: Colors.blueGrey.shade900,
-                      size: 30,
-                    ),
-                    const SizedBox(width: 10),
-                    // Timer progress bar
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final progress =
-                              (_totalTime - _timeRemaining) / _totalTime;
-                          return Stack(
-                            children: [
-                              // Gradient background bar
-                              Container(
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.lime.shade400,
-                                      Colors.yellow.shade400,
-                                      Colors.pink.shade400,
-                                    ],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.shade300,
-                                      blurRadius: 2,
-                                      offset: const Offset(0, 1),
+                  child: Column(
+                    children: [
+                      Text(
+                        LanguageHelper.getPlayMessage(language),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Timer bar
+                      Row(
+                        children: [
+                          // Stopwatch icon
+                          Icon(
+                            Icons.timer,
+                            color: Colors.blueGrey.shade900,
+                            size: 30,
+                          ),
+                          const SizedBox(width: 10),
+                          // Timer progress bar
+                          Expanded(
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final progress =
+                                    (_totalTime - _timeRemaining) / _totalTime;
+                                return Stack(
+                                  children: [
+                                    // Gradient background bar
+                                    Container(
+                                      height: 30,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.pink.shade400,
+                                            Colors.yellow.shade400,
+                                            Colors.lime.shade400,
+                                          ],
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.shade300,
+                                            blurRadius: 2,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Grey overlay that fills from right to left
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Align(
+                                        alignment: Alignment.centerRight,
+                                        child: AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 100,
+                                          ),
+                                          height: 30,
+                                          width:
+                                              constraints.maxWidth * progress,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade400,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ],
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+                      // Header row
+                      Row(
+                        children: [
+                          // Left column header - Items
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 15,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[700],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                LanguageHelper.getSelectItem(language),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
                               ),
-                              // Grey overlay that fills from right to left
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(15),
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 100),
-                                    height: 30,
-                                    width: constraints.maxWidth * progress,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          // Right column header - Prices
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 15,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.teal.shade200,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                LanguageHelper.getSelectPrice(language),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      // Dropdown columns
+                      Expanded(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Left column - Items
+                            Expanded(
+                              child: SingleChildScrollView(
+                                controller: _leftScrollController,
+                                child: Column(
+                                  children: List.generate(numDropdowns, (
+                                    index,
+                                  ) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 15.0,
+                                      ),
+                                      child: DropdownButtonFormField<String>(
+                                        value: _selectedItems[index],
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey.shade300,
+                                            ),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey.shade300,
+                                            ),
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.grey[100],
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 16,
+                                              ),
+                                        ),
+                                        hint: Center(
+                                          child: Text(
+                                            LanguageHelper.getSelectItemPlaceholder(
+                                              language,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        isExpanded: true,
+                                        selectedItemBuilder: (
+                                          BuildContext context,
+                                        ) {
+                                          final availableItems =
+                                              _getAvailableItemsForDropdown(
+                                                index,
+                                              );
+                                          return availableItems.map((item) {
+                                            return Text(
+                                              item,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                              ),
+                                            );
+                                          }).toList();
+                                        },
+                                        items: () {
+                                          final availableItems =
+                                              _getAvailableItemsForDropdown(
+                                                index,
+                                              );
+                                          return availableItems.map((item) {
+                                            return DropdownMenuItem<String>(
+                                              value: item,
+                                              child: Text(
+                                                item,
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 3,
+                                              ),
+                                            );
+                                          }).toList();
+                                        }(),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedItems[index] = value;
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                            // Right column - Prices
+                            Expanded(
+                              child: SingleChildScrollView(
+                                controller: _rightScrollController,
+                                child: Column(
+                                  children: List.generate(numDropdowns, (
+                                    index,
+                                  ) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 15.0,
+                                      ),
+                                      child: DropdownButtonFormField<String>(
+                                        value: _selectedPrices[index],
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: Colors.teal.shade50,
+                                            ),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: Colors.teal.shade50,
+                                            ),
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.teal.shade50,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 16,
+                                              ),
+                                        ),
+                                        hint: Center(
+                                          child: Text(
+                                            LanguageHelper.getSelectPricePlaceholder(
+                                              language,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        isExpanded: true,
+                                        selectedItemBuilder: (
+                                          BuildContext context,
+                                        ) {
+                                          return _shuffledPrices.map((price) {
+                                            return Center(
+                                              child: Text(
+                                                '\$$price',
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            );
+                                          }).toList();
+                                        },
+                                        items:
+                                            _shuffledPrices.map((price) {
+                                              return DropdownMenuItem<String>(
+                                                value: '\$$price',
+                                                child: Text('\$$price'),
+                                              );
+                                            }).toList(),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedPrices[index] = value;
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // Confirm Button
+                      // Center(
+                      //   child: GestureDetector(
+                      //     onTap: _calculateScore,
+                      //     child: Container(
+                      //       padding: const EdgeInsets.symmetric(
+                      //         horizontal: 80,
+                      //         vertical: 18,
+                      //       ),
+                      //       decoration: BoxDecoration(
+                      //         color: Colors.deepOrange,
+                      //         borderRadius: BorderRadius.circular(30),
+                      //       ),
+                      //       child: Text(
+                      //         LanguageHelper.getConfirm(language),
+                      //         style: const TextStyle(
+                      //           color: Colors.white,
+                      //           fontSize: 24,
+                      //           fontWeight: FontWeight.bold,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
+                      GestureDetector(
+                        onTap: _calculateScore,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 80,
+                            vertical: 30,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.deepOrange,
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                LanguageHelper.getConfirm(language),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                                size: 28,
                               ),
                             ],
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 25),
-                // Header row
-                Row(
-                  children: [
-                    // Left column header - Items
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[700],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          LanguageHelper.getSelectItem(language),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 15),
-                    // Right column header - Prices
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.teal.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          LanguageHelper.getSelectPrice(language),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                // Dropdown columns
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left column - Items
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: _leftScrollController,
-                          child: Column(
-                            children: List.generate(numDropdowns, (index) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 15.0),
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedItems[index],
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.grey[100],
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                  hint: Center(
-                                    child: Text(
-                                      LanguageHelper.getSelectItemPlaceholder(
-                                        language,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  isExpanded: true,
-                                  selectedItemBuilder: (BuildContext context) {
-                                    final availableItems =
-                                        _getAvailableItemsForDropdown(index);
-                                    return availableItems.map((item) {
-                                      return Text(
-                                        item,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
-                                  items: () {
-                                    final availableItems =
-                                        _getAvailableItemsForDropdown(index);
-                                    return availableItems.map((item) {
-                                      return DropdownMenuItem<String>(
-                                        value: item,
-                                        child: Text(
-                                          item,
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 3,
-                                        ),
-                                      );
-                                    }).toList();
-                                  }(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedItems[index] = value;
-                                    });
-                                  },
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      // Right column - Prices
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: _rightScrollController,
-                          child: Column(
-                            children: List.generate(numDropdowns, (index) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 15.0),
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedPrices[index],
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide(
-                                        color: Colors.teal.shade50,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide(
-                                        color: Colors.teal.shade50,
-                                      ),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.teal.shade50,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                  hint: Center(
-                                    child: Text(
-                                      LanguageHelper.getSelectPricePlaceholder(
-                                        language,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                  isExpanded: true,
-                                  selectedItemBuilder: (BuildContext context) {
-                                    return prices.map((price) {
-                                      return Center(
-                                        child: Text(
-                                          '\$$price',
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
-                                  items:
-                                      prices.map((price) {
-                                        return DropdownMenuItem<String>(
-                                          value: '\$$price',
-                                          child: Text('\$$price'),
-                                        );
-                                      }).toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedPrices[index] = value;
-                                    });
-                                  },
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-                const SizedBox(height: 30),
-
-                // Confirm Button
-                // Center(
-                //   child: GestureDetector(
-                //     onTap: _calculateScore,
-                //     child: Container(
-                //       padding: const EdgeInsets.symmetric(
-                //         horizontal: 80,
-                //         vertical: 18,
-                //       ),
-                //       decoration: BoxDecoration(
-                //         color: Colors.deepOrange,
-                //         borderRadius: BorderRadius.circular(30),
-                //       ),
-                //       child: Text(
-                //         LanguageHelper.getConfirm(language),
-                //         style: const TextStyle(
-                //           color: Colors.white,
-                //           fontSize: 24,
-                //           fontWeight: FontWeight.bold,
-                //         ),
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                GestureDetector(
-                  onTap: _calculateScore,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 80,
-                      vertical: 30,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.deepOrange,
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          LanguageHelper.getConfirm(language),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+              ),
+              // Home icon button at bottom right
+              Positioned(
+                bottom: 30,
+                right: 30,
+                child: GestureDetector(
+                  onTap: () async {
+                    final shouldPop = await _onWillPop();
+                    if (shouldPop) {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomeScreen(),
                         ),
-                        const SizedBox(width: 10),
-                        const Icon(
-                          Icons.play_arrow,
-                          color: Colors.white,
-                          size: 28,
+                        (route) => false,
+                      );
+                    }
+                  },
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
+                    child: const Icon(
+                      Icons.home,
+                      color: Colors.blueGrey,
+                      size: 50,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
