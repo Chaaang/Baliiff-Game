@@ -1,5 +1,9 @@
 # Baliiff-Game
 
+A mobile game where players identify objects and try to guess their actual prices.
+
+Players are presented with different items and must select the item they think matches the target price. The closer their guess is to the actual price, the better their score.
+
 <img width="1640" height="2360" alt="Simulator Screenshot - iPad (10th generation) - 2026-09-18 at 12 23 55" src="https://github.com/user-attachments/assets/59f4326f-010d-4498-aa4b-fcdde901ed67" />
 
 <img width="1640" height="2360" alt="Simulator Screenshot - iPad (10th generation) - 2026-09-18 at 12 24 57" src="https://github.com/user-attachments/assets/94388564-11b2-46c1-93d1-00fcc5cfec7f" />
